@@ -142,13 +142,11 @@ class QuantumLogger:
 
     def log_access(self, user_id: int, action: str, status: str):
         """Log user access and actions"""
-        timestamp = datetime.now(timezone.utc).strftime('%Y-%m-
-%d %H:%M:%S')
+        timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         log_data = {
             "timestamp": timestamp,
             "user_id": user_id,
             "action": action,
-            "status": status,
-            "current_user": "Xepel"  # Current user's login
+            "status": status
         }
         self.access_logger.info(json.dumps(log_data))
