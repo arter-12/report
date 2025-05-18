@@ -1,45 +1,35 @@
+import os
 from typing import Dict, Any
 import json
-import os
 
 class Config:
-    def __init__(self, config_file: str = "config/config.json"):
-        self.config_file = config_file
+    def __init__(self):
+        self.api_id = int(os.getenv('API_ID', ''))
+        self.api_hash = os.getenv('API_HASH', '')
+        self.bot_token = os.getenv('BOT_TOKEN', '')
+        self.owner_id = int(os.getenv('OWNER_ID', '0'))
+        
+        # Load additional config from file if exists
+        self.config_file = 'config/config.json'
         self.data = self._load_config()
-        self._validate_config()
 
     def _load_config(self) -> Dict[str, Any]:
-        if not os.path.exists(self.config_file):
-            raise FileNotFoundError(f"Config file not found: {self.config_file}")
-        
-        with open(self.config_file, 'r') as f:
-            return json.load(f)
-
-    def _validate_config(self):
-        required_fields = ['api_id', 'api_hash', 'bot_token', 'owner_id']
-        for field in required_fields:
-            if field not in self.data:
-                raise ValueError(f"Missing required config field: {field}")
-
-    @property
-    def api_id(self) -> int:
-        return int(self.data['api_id'])
-
-    @property
-    def api_hash(self) -> str:
-        return self.data['api_hash']
-
-    @property
-    def bot_token(self) -> str:
-        return self.data['bot_token']
-
-    @property
-    def owner_id(self) -> int:
-        return int(self.data['owner_id'])
+        if os.path.exists(self.config_file):
+            with open(self.config_file, 'r') as f:
+                return json.load(f)
+        return {}
 
     @property
     def authorized_users(self) -> list:
         return self.data.get('authorized_users', [])
+
+    @property
+    def report_delay(self) -> int:
+        return int(self.data.get('report_delay', 2))
+
+    @property
+    def max_sessions(self) -> int:
+        return int(self.data.get('max_sessions', 50))
 
     def update_config(self, key: str, value: Any):
         self.data[key] = value
