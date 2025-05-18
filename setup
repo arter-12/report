@@ -1,1 +1,47 @@
+#!/bin/bash
 
+# Current timestamp
+echo "Installation started at $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Upgrade pip
+pip install --upgrade pip
+
+# Install wheel and setuptools first
+pip install --upgrade wheel setuptools
+
+# Try to install requirements
+if ! pip install -r requirements.txt; then
+    echo "Standard installation failed, trying alternative methods..."
+    
+    # Remove problematic packages from requirements
+    grep -v "aiohttp" requirements.txt > requirements_temp.txt
+    
+    # Install other requirements first
+    pip install -r requirements_temp.txt
+    
+    # Try installing aiohttp with different methods
+    if [ "$(uname)" == "Linux" ]; then
+        echo "Installing aiohttp for Linux..."
+        if [ "$(uname -m)" == "x86_64" ]; then
+            pip install --no-cache-dir aiohttp --only-binary=:all:
+        else
+            # For other architectures, build from source
+            pip install --no-cache-dir aiohttp --no-binary=:all:
+        fi
+    else
+        # For non-Linux systems
+        pip install --no-cache-dir aiohttp
+    fi
+    
+    rm requirements_temp.txt
+fi
+
+# Verify installation
+echo "Verifying installation..."
+python3 -c "import pyrogram; import aiohttp; import cryptography; print('All critical packages installed successfully!')"
+
+echo "Installation completed at $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
