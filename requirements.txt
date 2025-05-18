@@ -1,8 +1,29 @@
-pyrogram==2.0.106
-tgcrypto==1.2.5
-aiosqlite==0.19.0
-python-i18n==0.3.9
-cryptography==41.0.1
-aiohttp==3.8.5
-python-dateutil==2.8.2
-colorlog==6.7.0
+# Core dependencies
+pyrogram>=2.0.106
+TgCrypto>=1.2.5
+
+# Database
+aiosqlite>=0.19.0
+
+# HTTP Client - with pre-built wheel specification
+aiohttp>=3.8.5; platform_system!="Linux"
+aiohttp>=3.8.5; platform_system=="Linux" and platform_machine=="x86_64" --only-binary=:all:
+aiohttp>=3.8.5; platform_system=="Linux" and platform_machine!="x86_64" --no-binary=:all:
+
+# Utilities
+python-i18n>=0.3.9
+python-dateutil>=2.8.2
+colorlog>=6.7.0
+cryptography>=41.0.1; platform_system!="Linux"
+cryptography>=41.0.1; platform_system=="Linux" --no-binary=:all:
+
+# File operations
+aiofiles>=23.1.0
+
+# Graphics and plotting
+Pillow>=9.5.0
+plotly>=5.14.1
+
+# Optional - for better performance
+ujson>=5.7.0; platform_system!="Linux"
+ujson>=5.7.0; platform_system=="Linux" --no-binary=:all:
