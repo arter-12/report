@@ -1,67 +1,30 @@
 import logging
-from logging.handlers import RotatingFileHandler
 import os
+import sys
 from datetime import datetime, timezone
 import json
 from typing import Dict, Any
 import colorlog
 
 class QuantumLogger:
-    def __init__(self, logs_dir: str = "logs"):
-        self.logs_dir = logs_dir
-        self.ensure_log_directory()
+    def __init__(self):
         self.setup_loggers()
-
-    def ensure_log_directory(self):
-        """Create log directories if they don't exist"""
-        directories = [
-            self.logs_dir,
-            f"{self.logs_dir}/reports",
-            f"{self.logs_dir}/sessions",
-            f"{self.logs_dir}/errors",
-            f"{self.logs_dir}/access"
-        ]
-        for directory in directories:
-            os.makedirs(directory, exist_ok=True)
 
     def setup_loggers(self):
         """Setup different loggers for various components"""
+        # Determine if we're running on Heroku
+        self.is_heroku = 'DYNO' in os.environ
+        
         # Main bot logger
-        self.bot_logger = self._setup_logger(
-            'quantum_bot',
-            f'{self.logs_dir}/bot.log',
-            format_with_color=True
-        )
-
-        # Report logger
-        self.report_logger = self._setup_logger(
-            'quantum_reports',
-            f'{self.logs_dir}/reports/reports.log'
-        )
-
-        # Session logger
-        self.session_logger = self._setup_logger(
-            'quantum_sessions',
-            f'{self.logs_dir}/sessions/sessions.log'
-        )
-
-        # Error logger
-        self.error_logger = self._setup_logger(
-            'quantum_errors',
-            f'{self.logs_dir}/errors/errors.log',
-            level=logging.ERROR
-        )
-
-        # Access logger
-        self.access_logger = self._setup_logger(
-            'quantum_access',
-            f'{self.logs_dir}/access/access.log'
-        )
+        self.bot_logger = self._setup_logger('quantum_bot', format_with_color=True)
+        self.report_logger = self._setup_logger('quantum_reports')
+        self.session_logger = self._setup_logger('quantum_sessions')
+        self.error_logger = self._setup_logger('quantum_errors', level=logging.ERROR)
+        self.access_logger = self._setup_logger('quantum_access')
 
     def _setup_logger(
         self,
         name: str,
-        log_file: str,
         level: int = logging.INFO,
         format_with_color: bool = False
     ) -> logging.Logger:
@@ -69,21 +32,21 @@ class QuantumLogger:
         logger = logging.getLogger(name)
         logger.setLevel(level)
 
-        # File handler with rotation
-        file_handler = RotatingFileHandler(
-            log_file,
-            maxBytes=10*1024*1024,  # 10MB
-            backupCount=5
-        )
-        file_handler.setLevel(level)
+        # Always use stdout for Heroku
+        if self.is_heroku:
+            handler = logging.StreamHandler(sys.stdout)
+        else:
+            try:
+                # Try to create logs directory and use file handler
+                os.makedirs('logs', exist_ok=True)
+                handler = logging.FileHandler(f'logs/{name}.log')
+            except (OSError, IOError):
+                # Fallback to stdout if file creation fails
+                handler = logging.StreamHandler(sys.stdout)
 
-        # Console handler with optional color
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(level)
-
-        if format_with_color:
-            # Colored formatter for console
-            color_formatter = colorlog.ColoredFormatter(
+        if format_with_color and sys.stdout.isatty():
+            # Use colored output only if in terminal
+            formatter = colorlog.ColoredFormatter(
                 "%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s",
                 log_colors={
                     'DEBUG': 'cyan',
@@ -93,21 +56,13 @@ class QuantumLogger:
                     'CRITICAL': 'red,bg_white',
                 }
             )
-            console_handler.setFormatter(color_formatter)
         else:
-            # Standard formatter
             formatter = logging.Formatter(
                 '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
             )
-            console_handler.setFormatter(formatter)
 
-        file_handler.setFormatter(logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        ))
-
-        logger.addHandler(file_handler)
-        logger.addHandler(console_handler)
-
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
         return logger
 
     def log_report(self, data: Dict[str, Any]):
