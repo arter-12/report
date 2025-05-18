@@ -50,13 +50,17 @@ class QuantumReportBot:
 
         # Initialize bot client with appropriate settings
         self.bot = Client(
-            "QuantumReportBot",
-            api_id=self.config.api_id,
-            api_hash=self.config.api_hash,
-            bot_token=self.config.bot_token,
-            workdir=f"{self.data_dir}/sessions",
-            in_memory=True if self.is_heroku else False
-        )
+           # In the QuantumReportBot.__init__ method, update the logger initialization:
+
+# Initialize logger first
+self.logger = QuantumLogger()
+self.logger.log_event('bot', 'INFO', f"Initializing bot at {CURRENT_UTC} by {CURRENT_USER}")
+
+# Initialize database with logger
+self.db = Database(
+    db_path=f"{self.data_dir}/quantum.db",
+    logger=self.logger.get_logger('bot')
+)
 
         # Initialize managers
         self.session_manager = SessionManager(self.db, self.config)
