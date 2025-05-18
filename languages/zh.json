@@ -1,0 +1,40 @@
+{
+    "welcome": {
+        "owner": "🎭 欢迎您，主人！\n\n您对报告系统拥有完全的控制权。",
+        "premium": "⭐️ 欢迎，尊贵用户！\n\n您可以访问所有报告功能。",
+        "user": "👋 欢迎使用量子报告机器人！\n\n这是一个高级报告系统。"
+    },
+    "menu": {
+        "main": "请选择以下菜单中的选项：",
+        "sessions": "管理您的活跃会话：",
+        "report": "选择您想要报告的内容：",
+        "settings": "设置您的偏好：",
+        "stats": "查看您的统计信息："
+    },
+    "sessions": {
+        "add": "发送您的 Pyrogram 会话字符串以添加账户。",
+        "added": "✅ 新会话成功添加！\n\n名称：{name}\n电话：{phone}",
+        "removed": "✅ 会话成功删除！",
+        "verified": "✅ 会话成功验证！",
+        "invalid": "❌ 会话字符串无效！\n\n错误：{error}"
+    },
+    "report": {
+        "select_type": "选择报告类型：",
+        "enter_target": "发送您想要报告的 {type} 链接：",
+        "processing": "🔄 正在处理报告...\n\n目标：{target}\n会话：{sessions}",
+        "success": "✅ 报告完成！\n\n成功：{success}\n失败：{failed}",
+        "failed": "❌ 报告失败！\n\n错误：{error}"
+    },
+    "settings": {
+        "language": "选择您的首选语言：",
+        "theme": "选择您的首选主题：",
+        "notifications": "设置通知偏好：",
+        "security": "管理安全设置："
+    },
+    "errors": {
+        "unauthorized": "⚠️ 您没有权限使用此功能！",
+        "invalid_input": "❌ 输入无效！请再试一次。",
+        "flood_wait": "⚠️ 请在尝试之前等待 {seconds} 秒。",
+        "session_expired": "❌ 会话已过期！请添加新的会话。"
+    }
+}

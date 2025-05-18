@@ -1,0 +1,40 @@
+{
+    "welcome": {
+        "owner":  "🎭 Bienvenue Maître !\n\nVous avez un contrôle total sur le système de rapports.",
+        "premium":"⭐️ Bienvenue Utilisateur Premium !\n\nVous avez accès à toutes les fonctionnalités de rapport.",
+        "user":"👋 Bienvenue dans le Bot de Rapport Quantum !\n\nCeci est un système de rapport premium."
+    },
+    "menu":{
+        "main":"Sélectionnez une option dans le menu ci-dessous :",
+        "sessions":"Gérez vos sessions actives :",
+        "report":"Choisissez ce que vous souhaitez signaler :",
+        "settings":"Configurez vos préférences :",
+        "stats":"Consultez vos statistiques :"
+    },
+    "sessions":{
+        "add":"Envoyez votre chaîne de session Pyrogram pour ajouter un compte.",
+        "added":"✅ Nouvelle session ajoutée avec succès !\n\nNom : {name}\nTéléphone : {phone}",
+        "removed":"✅ Session supprimée avec succès !",
+        "verified":"✅ Session vérifiée avec succès !",
+        "invalid":"❌ Chaîne de session invalide !\n\nErreur : {error}"
+    },
+    "report":{
+        "select_type":"Sélectionnez le type de rapport :",
+        "enter_target":"Envoyez le lien de {type} que vous souhaitez signaler :",
+        "processing":"🔄 Traitement du rapport...\n\nCible : {target}\nSessions : {sessions}",
+        "success":"✅ Rapport terminé !\n\nSuccès : {success}\nÉchec : {failed}",
+        "failed":"❌ Rapport échoué !\n\nErreur : {error}"
+    },
+    "settings":{
+        "language":"Sélectionnez votre langue préférée :",
+        "theme":"Choisissez votre thème préféré :",
+        "notifications":"Configurez les paramètres de notification :",
+        "security":"Gérez les paramètres de sécurité :"
+    },
+    "errors":{
+        "unauthorized":"⚠️ Vous n'êtes pas autorisé à utiliser cette fonctionnalité !",
+        "invalid_input":"❌ Entrée invalide ! Veuillez réessayer.",
+        "flood_wait":"⚠️ Veuillez attendre {seconds} secondes avant d'essayer à nouveau.",
+        "session_expired":"❌ La session a expiré ! Veuillez ajouter une nouvelle session."
+    }
+}

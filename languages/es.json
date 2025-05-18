@@ -1,0 +1,37 @@
+{
+    "welcome": {
+        "owner": "🎭 ¡Bienvenido Maestro!\n\nTienes control total sobre el sistema de informes.",
+        "premium": "⭐️ ¡Bienvenido Usuario Premium!\n\nTienes acceso a todas las funciones de informes.",
+        "user": "👋 ¡Bienvenido al Quantum Report Bot!\n\nEste es un sistema de informes premium."
+    },
+    "menu": {
+        "main": "Selecciona una opción del menú a continuación:",
+        "sessions": "Administra tus sesiones activas:",
+        "report": "Elige lo que deseas informar:",
+        "settings": "Configura tus preferencias:",
+        "stats": "Mira tus estadísticas:"
+    },
+    "sessions": {
+        "add": "Envía tu cadena de sesión de Pyrogram para agregar una cuenta.",
+        "added": "✅ ¡Sesión nueva agregada con éxito!\n\nNombre: {name}\nTeléfono: {phone}",
+        "removed": "✅ ¡Sesión eliminada con éxito!",
+        "verified": "✅ ¡Sesión verificada con éxito!",
+        "invalid": "❌ ¡Cadena de sesión inválida!\n\nError: {error}"
+    },
+    "report": {
+        "select_type": "Selecciona el tipo de informe:",
+        "enter_target": "Envía el enlace de {type} que deseas informar:",
+        "processing": "🔄 Procesando informe...\n\nObjetivo: {target}\nSesiones: {sessions}",
+        "success": "✅ ¡Informe completado!\n\nÉxitos: {success}\nFallidos: {failed}",
+        "failed": "❌ ¡Informe fallido!\n\nError: {error}"
+    },
+    "settings": {
+        "language": "Selecciona tu idioma preferido:",
+        "theme": "Elige tu tema preferido:",
+        "notifications": "Configura la configuración de notificaciones:",
+        "security": "Gestiona la configuración de seguridad:"
+    },
+    "errors": {
+        "unauthorized": "⚠️ ¡No estás autorizado para usar esta función!",
+        "invalid_input": "❌ ¡Entrada inválida! Por favor intenta de nuevo.",
+        "flood_wait": "⚠️ Por favor espera {seconds} segundos antes de intentar nuevamente.",

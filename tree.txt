@@ -1,0 +1,37 @@
+quantum_report_bot/
+├── config/
+│   ├── __init__.py
+│   ├── config.json
+│   └── config.py
+├── database/
+│   ├── __init__.py
+│   ├── models.py
+│   └── database.py
+├── handlers/
+│   ├── __init__.py
+│   ├── base_handler.py
+│   ├── report_handler.py
+│   ├── session_handler.py
+│   ├── settings_handler.py
+│   └── stats_handler.py
+├── languages/
+│   ├── en.json
+│   ├── es.json
+│   └── ru.json
+├── utils/
+│   ├── __init__.py
+│   ├── decorators.py
+│   ├── helpers.py
+│   └── validators.py
+├── data/
+│   ├── sessions/
+│   ├── stats/
+│   └── backups/
+├── logs/
+│   ├── bot.log
+│   ├── errors.log
+│   └── reports.log
+├── __init__.py
+├── bot.py
+├── requirements.txt
+└── README.md

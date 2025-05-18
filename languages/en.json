@@ -1,0 +1,40 @@
+{
+    "welcome": {
+        "owner": "🎭 Welcome Master!\n\nYou have complete control over the reporting system.",
+        "premium": "⭐️ Welcome Premium User!\n\nYou have access to all reporting features.",
+        "user": "👋 Welcome to Quantum Report Bot!\n\nThis is a premium reporting system."
+    },
+    "menu": {
+        "main": "Select an option from the menu below:",
+        "sessions": "Manage your active sessions:",
+        "report": "Choose what you want to report:",
+        "settings": "Configure your preferences:",
+        "stats": "View your statistics:"
+    },
+    "sessions": {
+        "add": "Send your Pyrogram session string to add an account.",
+        "added": "✅ Successfully added new session!\n\nName: {name}\nPhone: {phone}",
+        "removed": "✅ Session removed successfully!",
+        "verified": "✅ Session verified successfully!",
+        "invalid": "❌ Invalid session string!\n\nError: {error}"
+    },
+    "report": {
+        "select_type": "Select report type:",
+        "enter_target": "Send the {type} link you want to report:",
+        "processing": "🔄 Processing report...\n\nTarget: {target}\nSessions: {sessions}",
+        "success": "✅ Report completed!\n\nSuccess: {success}\nFailed: {failed}",
+        "failed": "❌ Report failed!\n\nError: {error}"
+    },
+    "settings": {
+        "language": "Select your preferred language:",
+        "theme": "Choose your preferred theme:",
+        "notifications": "Configure notification settings:",
+        "security": "Manage security settings:"
+    },
+    "errors": {
+        "unauthorized": "⚠️ You are not authorized to use this feature!",
+        "invalid_input": "❌ Invalid input! Please try again.",
+        "flood_wait": "⚠️ Please wait {seconds} seconds before trying again.",
+        "session_expired": "❌ Session expired! Please add a new session."
+    }
+}
