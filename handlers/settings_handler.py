@@ -1,169 +1,146 @@
 from .base_handler import BaseHandler
-from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from datetime import datetime, timezone
+from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from typing import Optional, Dict, Any
 import json
 
 class SettingsHandler(BaseHandler):
-    def __init__(self, bot_instance):
-        super().__init__(bot_instance)
-        self.available_languages = ['en', 'es', 'ru', 'ar', 'hi', 'zh']
-        self.available_themes = ['default', 'dark', 'light', 'blue']
+    def __init__(self, bot):
+        super().__init__(bot)
+        self.settings_cache = {}
 
     async def handle_settings(self, callback_query: CallbackQuery):
         """Handle settings menu"""
-        user_id = callback_query.from_user.id
-        user_settings = await self.bot.db.get_user_settings(user_id)
-        
-        if await self.check_user_auth(user_id, 'owner'):
-            await self._show_owner_settings(callback_query)
-        else:
-            await self._show_user_settings(callback_query, user_settings)
+        try:
+            user_id = callback_query.from_user.id
+            await self.log_action("settings_menu", user_id)
 
-    async def _show_owner_settings(self, callback_query: CallbackQuery):
-        """Show owner settings menu"""
-        buttons = [
-            [
-                InlineKeyboardButton("👥 User Management", callback_data="settings_users"),
-                InlineKeyboardButton("🤖 Bot Settings", callback_data="settings_bot")
-            ],
-            [
-                InlineKeyboardButton("🔒 Security", callback_data="settings_security"),
-                InlineKeyboardButton("📊 Analytics", callback_data="settings_analytics")
-            ],
-            [
-                InlineKeyboardButton("💾 Backup", callback_data="settings_backup"),
-                InlineKeyboardButton("🔄 Auto-Report", callback_data="settings_auto_report")
-            ],
-            [
-                InlineKeyboardButton("🌐 Language", callback_data="settings_language"),
-                InlineKeyboardButton("🎨 Theme", callback_data="settings_theme")
-            ],
-            [InlineKeyboardButton("« Back", callback_data="main_menu")]
-        ]
+            settings = await self.get_user_settings(user_id)
+            buttons = self.create_settings_buttons(settings)
 
-        await self.edit_message(
-            callback_query.message,
-            "⚙️ **Owner Settings Panel**\n\n"
-            "Manage all aspects of your bot:",
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
-
-    async def _show_user_settings(self, callback_query: CallbackQuery, settings: dict):
-        """Show user settings menu"""
-        buttons = [
-            [
-                InlineKeyboardButton("🌐 Language", callback_data="settings_language"),
-                InlineKeyboardButton("🎨 Theme", callback_data="settings_theme")
-            ],
-            [
-                InlineKeyboardButton("🔔 Notifications", callback_data="settings_notifications"),
-                InlineKeyboardButton("⚡️ Report Mode", callback_data="settings_report_mode")
-            ],
-            [InlineKeyboardButton("« Back", callback_data="main_menu")]
-        ]
-
-        text = (
-            "⚙️ **User Settings**\n\n"
-            f"🌐 Language: {settings['language']}\n"
-            f"🎨 Theme: {settings['theme']}\n"
-            f"🔔 Notifications: {'On' if settings['notifications'] else 'Off'}\n"
-            f"⚡️ Report Mode: {settings['report_mode']}"
-        )
-
-        await self.edit_message(
-            callback_query.message,
-            text,
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
-
-    async def handle_language_setting(self, callback_query: CallbackQuery):
-        """Handle language selection"""
-        buttons = []
-        row = []
-        
-        for i, lang in enumerate(self.available_languages, 1):
-            row.append(InlineKeyboardButton(
-                f"🌐 {lang.upper()}", 
-                callback_data=f"set_lang_{lang}"
-            ))
-            
-            if i % 2 == 0 or i == len(self.available_languages):
-                buttons.append(row)
-                row = []
-        
-        buttons.append([InlineKeyboardButton("« Back", callback_data="settings")])
-        
-        await self.edit_message(
-            callback_query.message,
-            "🌐 **Select Language**\n\n"
-            "Choose your preferred language:",
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
-
-    async def handle_theme_setting(self, callback_query: CallbackQuery):
-        """Handle theme selection"""
-        buttons = []
-        for theme in self.available_themes:
-            buttons.append([InlineKeyboardButton(
-                f"🎨 {theme.title()}", 
-                callback_data=f"set_theme_{theme}"
-            )])
-        
-        buttons.append([InlineKeyboardButton("« Back", callback_data="settings")])
-        
-        await self.edit_message(
-            callback_query.message,
-            "🎨 **Select Theme**\n\n"
-            "Choose your preferred theme:",
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
-
-    async def handle_security_settings(self, callback_query: CallbackQuery):
-        """Handle security settings (owner only)"""
-        if not await self.check_user_auth(callback_query.from_user.id, 'owner'):
-            await self.answer_callback(
-                callback_query,
-                "⚠️ Owner access required!",
+            await callback_query.message.edit_text(
+                "⚙️ **Settings**\n\n"
+                "Configure your preferences below:",
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+        except Exception as e:
+            await self.handle_error(e, "handle_settings", user_id)
+            await callback_query.answer(
+                "❌ Error accessing settings. Please try again.",
                 show_alert=True
             )
-            return
 
-        security_settings = self.bot.config.get_security_settings()
-        
+    async def get_user_settings(self, user_id: int) -> Dict[str, Any]:
+        """Get user settings from database"""
+        try:
+            if user_id in self.settings_cache:
+                return self.settings_cache[user_id]
+
+            settings = await self.db.get_user_settings(user_id)
+            self.settings_cache[user_id] = settings
+            return settings
+        except Exception as e:
+            await self.handle_error(e, "get_user_settings", user_id)
+            return {}
+
+    def create_settings_buttons(self, settings: Dict[str, Any]) -> list:
+        """Create settings menu buttons"""
         buttons = [
             [
                 InlineKeyboardButton(
-                    "🔒 2FA", 
-                    callback_data="security_2fa"
-                ),
-                InlineKeyboardButton(
-                    "🚫 Anti-Flood", 
-                    callback_data="security_antiflood"
+                    f"🌐 Language: {settings.get('language', 'en')}",
+                    callback_data="settings_language"
                 )
             ],
             [
                 InlineKeyboardButton(
-                    "👥 Access Control", 
-                    callback_data="security_access"
-                ),
-                InlineKeyboardButton(
-                    "📝 Logs", 
-                    callback_data="security_logs"
+                    f"🔔 Notifications: {'On' if settings.get('notifications', True) else 'Off'}",
+                    callback_data="settings_notifications"
                 )
             ],
-            [InlineKeyboardButton("« Back", callback_data="settings")]
+            [
+                InlineKeyboardButton(
+                    "⬅️ Back",
+                    callback_data="main_menu"
+                )
+            ]
         ]
+        return buttons
 
-        text = (
-            "🔒 **Security Settings**\n\n"
-            f"2FA: {'Enabled' if security_settings['2fa'] else 'Disabled'}\n"
-            f"Anti-Flood: {'Enabled' if security_settings['antiflood'] else 'Disabled'}\n"
-            f"Max Sessions: {security_settings['max_sessions']}\n"
-            f"Session Timeout: {security_settings['session_timeout']}s"
-        )
+    async def handle_specific_setting(self, callback_query: CallbackQuery):
+        """Handle specific setting updates"""
+        try:
+            user_id = callback_query.from_user.id
+            data = callback_query.data.split('_')[1]
 
-        await self.edit_message(
-            callback_query.message,
-            text,
+            if data == "language":
+                await self.show_language_settings(callback_query)
+            elif data == "notifications":
+                await self.toggle_notifications(callback_query)
+            else:
+                await callback_query.answer("Invalid setting option")
+
+        except Exception as e:
+            await self.handle_error(e, "handle_specific_setting", user_id)
+            await callback_query.answer(
+                "❌ Error updating setting. Please try again.",
+                show_alert=True
+            )
+
+    async def show_language_settings(self, callback_query: CallbackQuery):
+        """Show language selection menu"""
+        buttons = [
+            [
+                InlineKeyboardButton("English 🇬🇧", callback_data="setlang_en"),
+                InlineKeyboardButton("Español 🇪🇸", callback_data="setlang_es")
+            ],
+            [
+                InlineKeyboardButton("Русский 🇷🇺", callback_data="setlang_ru"),
+                InlineKeyboardButton("中文 🇨🇳", callback_data="setlang_zh")
+            ],
+            [
+                InlineKeyboardButton("हिंदी 🇮🇳", callback_data="setlang_hi"),
+                InlineKeyboardButton("العربية 🇸🇦", callback_data="setlang_ar")
+            ],
+            [
+                InlineKeyboardButton("⬅️ Back", callback_data="settings")
+            ]
+        ]
+        await callback_query.message.edit_text(
+            "🌐 **Select your language**\n\n"
+            "Choose your preferred language from the options below:",
             reply_markup=InlineKeyboardMarkup(buttons)
         )
+
+    async def toggle_notifications(self, callback_query: CallbackQuery):
+        """Toggle notification settings"""
+        try:
+            user_id = callback_query.from_user.id
+            settings = await self.get_user_settings(user_id)
+            
+            # Toggle notification setting
+            current = settings.get('notifications', True)
+            settings['notifications'] = not current
+            
+            # Update database
+            await self.db.update_user_settings(user_id, settings)
+            
+            # Update cache
+            self.settings_cache[user_id] = settings
+            
+            # Update message
+            buttons = self.create_settings_buttons(settings)
+            await callback_query.message.edit_reply_markup(
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+            
+            await callback_query.answer(
+                f"Notifications turned {'on' if not current else 'off'}",
+                show_alert=True
+            )
+
+        except Exception as e:
+            await self.handle_error(e, "toggle_notifications", user_id)
+            await callback_query.answer(
+                "❌ Error updating notifications. Please try again.",
+                show_alert=True
+            )
