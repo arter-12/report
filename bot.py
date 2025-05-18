@@ -5,6 +5,7 @@ import asyncio
 import logging
 import signal
 import sys
+import os
 from typing import Dict, Any, Optional
 import json
 
@@ -17,75 +18,61 @@ from handlers.settings_handler import SettingsHandler
 from handlers.stats_handler import StatsHandler
 from utils.helpers import SessionManager, StatsManager
 from utils.decorators import error_handler, log_action
+from utils.logger import QuantumLogger
 
 class QuantumReportBot:
     def __init__(self):
+        """Initialize Quantum Report Bot"""
+        # Bot information
         self.start_time = datetime.now(timezone.utc)
+        self.version = "1.0.0"
+        self.creator = "Xepel"
+        self.last_updated = "2025-05-18 18:23:18"
+
+        # Environment setup
+        self.is_heroku = 'DYNO' in os.environ
+        self.data_dir = '/tmp/quantum_bot' if self.is_heroku else 'data'
+        os.makedirs(self.data_dir, exist_ok=True)
+
+        # Initialize components
         self.config = Config()
-        self.db = Database()
-        self.setup_logging()
-        
+        self.db = Database(db_path=f"{self.data_dir}/quantum.db")
+        self.logger = QuantumLogger()
+
         # Initialize bot client
         self.bot = Client(
             "QuantumReportBot",
             api_id=self.config.api_id,
             api_hash=self.config.api_hash,
-            bot_token=self.config.bot_token
+            bot_token=self.config.bot_token,
+            workdir=f"{self.data_dir}/sessions"
         )
 
         # Initialize managers
         self.session_manager = SessionManager(self.db, self.config)
         self.stats_manager = StatsManager(self.db)
-        
+
         # Initialize handlers
         self.report_handler = ReportHandler(self)
         self.session_handler = SessionHandler(self)
         self.settings_handler = SettingsHandler(self)
         self.stats_handler = StatsHandler(self)
-        
+
         # Bot state
         self.is_running = False
         self.maintenance_mode = False
         self.user_state = {}
-        
+
         # Setup handlers
         self.setup_handlers()
         
-        self.logger.info(f"Bot initialized at {self.start_time.strftime('%Y-%m-%d %H:%M:%S')} UTC")
-
-    def setup_logging(self):
-        """Setup logging configuration"""
-        self.logger = logging.getLogger('QuantumBot')
-        self.logger.setLevel(logging.INFO)
-        
-        # File handler
-        file_handler = logging.FileHandler('logs/bot.log')
-        file_handler.setLevel(logging.INFO)
-        
-        # Error handler
-        error_handler = logging.FileHandler('logs/errors.log')
-        error_handler.setLevel(logging.ERROR)
-        
-        # Console handler
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
-        
-        # Formatter
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        self.logger.bot_logger.info(
+            f"Bot initialized at {self.start_time.strftime('%Y-%m-%d %H:%M:%S')} UTC by {self.creator}"
         )
-        
-        file_handler.setFormatter(formatter)
-        error_handler.setFormatter(formatter)
-        console_handler.setFormatter(formatter)
-        
-        self.logger.addHandler(file_handler)
-        self.logger.addHandler(error_handler)
-        self.logger.addHandler(console_handler)
 
     def setup_handlers(self):
         """Setup message and callback handlers"""
-        
+
         @self.bot.on_message(filters.command("start"))
         @error_handler
         @log_action("start")
@@ -136,13 +123,17 @@ class QuantumReportBot:
             
             status_text = (
                 "🤖 **Bot Status**\n\n"
+                f"Version: {self.version}\n"
+                f"Creator: {self.creator}\n"
+                f"Last Updated: {self.last_updated} UTC\n\n"
                 f"Start Time: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')} UTC\n"
                 f"Uptime: {str(uptime).split('.')[0]}\n"
-                f"Active Users: {stats['active_users']}\n"
-                f"Total Sessions: {stats['total_sessions']}\n"
-                f"Reports Today: {stats['today_reports']}\n"
-                f"Success Rate: {stats['success_rate']:.1f}%\n"
-                f"Maintenance Mode: {'🔧 On' if self.maintenance_mode else '✅ Off'}"
+                f"Active Users: {stats.get('active_users', 0)}\n"
+                f"Total Sessions: {stats.get('total_sessions', 0)}\n"
+                f"Reports Today: {stats.get('today_reports', 0)}\n"
+                f"Success Rate: {stats.get('success_rate', 0):.1f}%\n"
+                f"Maintenance Mode: {'🔧 On' if self.maintenance_mode else '✅ Off'}\n"
+                f"Environment: {'Heroku' if self.is_heroku else 'Local'}"
             )
             
             await message.reply_text(status_text)
@@ -203,22 +194,78 @@ class QuantumReportBot:
                     "Please use the menu buttons to interact with the bot."
                 )
 
+    async def check_heroku_setup(self):
+        """Verify Heroku-specific setup"""
+        if self.is_heroku:
+            required_vars = ['API_ID', 'API_HASH', 'BOT_TOKEN', 'OWNER_ID']
+            missing_vars = [var for var in required_vars if not os.getenv(var)]
+            
+            if missing_vars:
+                self.logger.error_logger.error(
+                    f"Missing required environment variables: {', '.join(missing_vars)}"
+                )
+                raise ValueError(
+                    f"Missing required environment variables: {', '.join(missing_vars)}"
+                )
+            
+            # Create temporary directories
+            os.makedirs('/tmp/quantum_bot/sessions', exist_ok=True)
+            os.makedirs('/tmp/quantum_bot/stats', exist_ok=True)
+            
+            self.logger.bot_logger.info("Heroku setup verified successfully")
+
+    async def periodic_session_verification(self):
+        """Verify sessions periodically"""
+        while self.is_running:
+            try:
+                self.logger.bot_logger.info("Starting periodic session verification")
+                await self.session_handler.verify_all_sessions()
+            except Exception as e:
+                self.logger.error_logger.error(f"Error in session verification: {str(e)}")
+            await asyncio.sleep(3600)  # Check every hour
+
+    async def periodic_stats_update(self):
+        """Update statistics periodically"""
+        while self.is_running:
+            try:
+                self.logger.bot_logger.info("Updating bot statistics")
+                await self.stats_manager.update_bot_stats()
+            except Exception as e:
+                self.logger.error_logger.error(f"Error updating stats: {str(e)}")
+            await asyncio.sleep(300)  # Update every 5 minutes
+
+    async def periodic_backup(self):
+        """Create periodic backups"""
+        while self.is_running and not self.is_heroku:
+            try:
+                self.logger.bot_logger.info("Creating database backup")
+                await self.db.create_backup()
+            except Exception as e:
+                self.logger.error_logger.error(f"Error creating backup: {str(e)}")
+            await asyncio.sleep(86400)  # Backup daily
+
     async def start(self):
         """Start the bot"""
         try:
+            if self.is_heroku:
+                await self.check_heroku_setup()
+                
             await self.bot.start()
             self.is_running = True
-            self.logger.info("Bot started successfully")
+            self.logger.bot_logger.info("Bot started successfully")
             
             # Start periodic tasks
             asyncio.create_task(self.periodic_session_verification())
             asyncio.create_task(self.periodic_stats_update())
-            asyncio.create_task(self.periodic_backup())
+            
+            # Don't run backup task on Heroku
+            if not self.is_heroku:
+                asyncio.create_task(self.periodic_backup())
             
             while self.is_running:
                 await asyncio.sleep(1)
         except Exception as e:
-            self.logger.error(f"Error starting bot: {str(e)}")
+            self.logger.error_logger.error(f"Error starting bot: {str(e)}")
             raise
         finally:
             await self.stop()
@@ -229,39 +276,9 @@ class QuantumReportBot:
             self.is_running = False
             await self.session_manager.close_all_clients()
             await self.bot.stop()
-            self.logger.info("Bot stopped successfully")
+            self.logger.bot_logger.info("Bot stopped successfully")
         except Exception as e:
-            self.logger.error(f"Error stopping bot: {str(e)}")
-
-    async def periodic_session_verification(self):
-        """Verify sessions periodically"""
-        while self.is_running:
-            try:
-                self.logger.info("Starting periodic session verification")
-                await self.session_handler.verify_all_sessions()
-            except Exception as e:
-                self.logger.error(f"Error in session verification: {str(e)}")
-            await asyncio.sleep(3600)  # Check every hour
-
-    async def periodic_stats_update(self):
-        """Update statistics periodically"""
-        while self.is_running:
-            try:
-                self.logger.info("Updating bot statistics")
-                await self.stats_manager.update_bot_stats()
-            except Exception as e:
-                self.logger.error(f"Error updating stats: {str(e)}")
-            await asyncio.sleep(300)  # Update every 5 minutes
-
-    async def periodic_backup(self):
-        """Create periodic backups"""
-        while self.is_running:
-            try:
-                self.logger.info("Creating database backup")
-                await self.db.create_backup()
-            except Exception as e:
-                self.logger.error(f"Error creating backup: {str(e)}")
-            await asyncio.sleep(86400)  # Backup daily
+            self.logger.error_logger.error(f"Error stopping bot: {str(e)}")
 
 async def main():
     """Main function to run the bot"""
@@ -269,7 +286,7 @@ async def main():
     
     def signal_handler():
         """Handle shutdown signals"""
-        bot.logger.info("Shutdown signal received")
+        bot.logger.bot_logger.info("Shutdown signal received")
         bot.is_running = False
     
     # Setup signal handlers
@@ -280,7 +297,7 @@ async def main():
     try:
         await bot.start()
     except Exception as e:
-        bot.logger.error(f"Fatal error: {str(e)}")
+        bot.logger.error_logger.error(f"Fatal error: {str(e)}")
         sys.exit(1)
 
 if __name__ == "__main__":
