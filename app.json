@@ -1,39 +1,29 @@
 {
-    "name": "Telegram Mass Report Bot",
-    "description": "Telegram Mass Report Bot ",
-    "logo": "https://graph.org/file/6c7ec3b6c2b2bfaf85203.jpg",
-    "keywords": ["Report Bot", "Report", "Ban", "Channel Report", "Telegram Channel Report"],    
-    "repository": " ",
-    "env": {
-        "API_ID": {
-            "description": "Your APP ID From my.telegram.org ",
-            "value": "",
-            "required": true
-        },
-        "API_HASH": {
-            "description": "Your API Hash From my.telegram.org ",
-            "value": "",
-            "required": true
-        },
-        "BOT_TOKEN": {
-            "description": "Your Bot Token From @BotFather",
-            "value": "",
-            "required": true
-        },
-        "OWNER": {
-            "description":"Add Your User or Chat ID",
-            "value": "",
-            "required": true
-        },
-        "SUDO": {
-            "description":"Give the user id of sudo user and give space btween them if more then 1",
-            "value": "",
-            "required": true
-        }
+  "name": "Quantum Report Bot",
+  "description": "A powerful Telegram bot for managing multiple accounts and handling mass reporting functionality.",
+  "repository": "https://github.com/yourusername/quantum-report-bot",
+  "keywords": ["python", "telegram", "bot", "reporting"],
+  "env": {
+    "API_ID": {
+      "description": "Your Telegram API ID",
+      "required": true
     },
-    "buildpacks": [
-        {
-            "url": "heroku/python"
-        }
-    ]
+    "API_HASH": {
+      "description": "Your Telegram API Hash",
+      "required": true
+    },
+    "BOT_TOKEN": {
+      "description": "Your Telegram Bot Token",
+      "required": true
+    },
+    "OWNER_ID": {
+      "description": "Your Telegram User ID",
+      "required": true
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ]
 }
